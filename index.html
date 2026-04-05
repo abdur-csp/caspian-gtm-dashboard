@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caspian Trade - Weekly KPI Dashboard</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0A1628;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+  .header{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .logo{font-size:22px;font-weight:700;letter-spacing:0.5px}
+  .logo span{color:#C9A84C}
+  .header-right{display:flex;align-items:center;gap:16px}
+  .week-select{background:#131E33;color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;min-width:200px}
+  .week-select:focus{outline:none;border-color:#C9A84C}
+  .week-select option{background:#131E33;color:#fff}
+  .last-updated{font-size:12px;color:rgba(255,255,255,0.4)}
+  .loading{text-align:center;padding:80px;font-size:18px;color:rgba(255,255,255,0.5)}
+  .dashboard{padding:24px 32px;max-width:1400px;margin:0 auto}
+  .section{margin-bottom:32px}
+  .section-title{font-size:16px;font-weight:600;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid;display:flex;align-items:center;gap:8px}
+  .section-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .green-accent .section-title{border-color:#22C55E}
+  .green-accent .dot{background:#22C55E}
+  .orange-accent .section-title{border-color:#F59E0B}
+  .orange-accent .dot{background:#F59E0B}
+  .blue-accent .section-title{border-color:#3B82F6}
+  .blue-accent .dot{background:#3B82F6}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .card{background:#131E33;border-radius:12px;padding:18px 20px;border:1px solid rgba(255,255,255,0.06);transition:border-color 0.2s}
+  .card:hover{border-color:rgba(255,255,255,0.12)}
+  .card-label{font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+  .card-value{font-size:28px;font-weight:700;color:#fff;margin-bottom:4px}
+  .card-value.currency{color:#C9A84C}
+  .card-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.4)}
+  .card-meta .prior{font-size:12px}
+  .delta{font-weight:600;display:inline-flex;align-items:center;gap:3px}
+  .delta.up{color:#22C55E}
+  .delta.down{color:#EF4444}
+  .delta.neutral{color:rgba(255,255,255,0.3)}
+  .snapshot-badge{display:inline-block;font-size:10px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);padding:2px 8px;border-radius:4px;margin-left:6px}
+  .mini-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .mini-card{background:#131E33;border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);text-align:center}
+  .mini-card .mini-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px}
+  .mini-card .mini-value{font-size:22px;font-weight:700}
+  .mini-card .mini-delta{font-size:12px;margin-top:3px}
+  .funnel-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto}
+  .funnel-stage{flex:1;min-width:130px;background:#131E33;border-radius:10px;padding:14px 16px;text-align:center;border:1px solid rgba(255,255,255,0.06);position:relative}
+  .funnel-stage:not(:last-child)::after{content:'\u2192';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.2);font-size:18px;z-index:1}
+  .funnel-stage .stage-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:6px}
+  .funnel-stage .stage-value{font-size:24px;font-weight:700}
+  .funnel-stage .stage-delta{font-size:12px;margin-top:3px}
+  .breakdown{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .breakdown .tag{font-size:11px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;color:rgba(255,255,255,0.6)}
+  .inline-stats{display:flex;gap:14px;flex-wrap:wrap}
+  .inline-stat{background:#131E33;border-radius:10px;padding:14px 18px;border:1px solid rgba(255,255,255,0.06);flex:1;min-width:180px}
+  .inline-stat .stat-label{font-size:12px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:6px}
+  .inline-stat .stat-value{font-size:22px;font-weight:700}
+  .error-msg{background:#2D1B1B;border:1px solid #EF4444;border-radius:8px;padding:16px;color:#FCA5A5;text-align:center;margin:40px}
+  @media(max-width:768px){
+    .header{flex-direction:column;gap:12px;padding:16px}
+    .dashboard{padding:16px}
+    .cards{grid-template-columns:1fr}
+    .funnel-row{flex-direction:column}
+    .funnel-stage::after{display:none}
+    .mini-cards{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo"><span>Caspian</span> Trade</div>
+  <div class="header-right">
+    <select class="week-select" id="weekSelect" disabled>
+      <option>Loading...</option>
+    </select>
+    <div class="last-updated" id="lastUpdated"></div>
+  </div>
+</div>
+<div id="app"><div class="loading">Loading dashboard data...</div></div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1u-8smcV7dJTRZqGxdpl63GIPZBeBNiTOPnVnjPwDEuQ/gviz/tq?tqx=out:csv&sheet=Weekly%20Metrics%20Tracker';
+
+// Metric name substrings to match rows
+const METRIC_KEYS = {
+  linkedinFollowers: 'New LinkedIns Followers',
+  websiteVisits: 'Website Visits',
+  emailsSent: 'Emails (Lemlist',
+  linkedinDMs: 'LinkedIn DMs',
+  callsDials: 'Calls+Dials',
+  totalTouches: 'Sales Activity (Touches)',
+  newCompanies: '# New Companies',
+  outboundDeals: '# Outbound Deals',
+  inboundDeals: '# Inbound Deals',
+  conferenceDeals: '# Conference Deals',
+  referrals: '# Referrals',
+  totalNewDeals: '# New Deals',
+  qualifiedDeals: '# New Qualified Deals',
+  discoveryDeals: '# New Discovery Deal',
+  newOffers: '# New Offers',
+  signedDeals: '# New Committed (Signed)',
+  pipelineValue: '$M Pipeline Value',
+  uniqueDeals: '# of Unique Deals in Pipeline',
+  avgDaysStage: '# Days Avg. Time in Stage',
+  appsSubmitted: 'Applications Submitted to CBP',
+  appsApproved: 'Applications Approved by CBP',
+  appsInReview: 'Applications in Review by CBP',
+  uniqueCustomersClaims: '# of Unique Customers w. Claims',
+  claimsTransmitted: '$ Claims Transmitted',
+  claimsPaid: '$ Claims Paid by CBP',
+  bookedRevenue: '$ Booked Revenue',
+  collectedRevenue: '$ Collected Revenue',
+  claimsAwaitingSub: '# Claims Awaiting Submission',
+  claimsAwaitingSubDollar: '$ Claims Awaiting Submission',
+  claimsWithCBP: '# Claims With CBP (Awaiting Settlement)',
+  claimsWithCBPDollar: '$ Claims With CBP (Awaiting Settlement)',
+  revenueAwaitingCollection: '$ Caspian Revenue Awaiting Collection'
+};
+
+const BALANCE_METRICS = new Set([
+  'pipelineValue','uniqueDeals','avgDaysStage','appsInReview',
+  'claimsAwaitingSub','claimsAwaitingSubDollar','claimsWithCBP','claimsWithCBPDollar',
+  'revenueAwaitingCollection'
+]);
+
+const CURRENCY_METRICS = new Set([
+  'pipelineValue','claimsTransmitted','claimsPaid','bookedRevenue','collectedRevenue',
+  'claimsAwaitingSubDollar','claimsWithCBPDollar','revenueAwaitingCollection'
+]);
+
+let allData = null;
+let weekColumns = [];
+let currentWeekIdx = 0;
+
+function parseCSV(text) {
+  const rows = [];
+  let current = '';
+  let inQuotes = false;
+  let row = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"' && text[i+1] === '"') { current += '"'; i++; }
+      else if (ch === '"') { inQuotes = false; }
+      else { current += ch; }
+    } else {
+      if (ch === '"') { inQuotes = true; }
+      else if (ch === ',') { row.push(current.trim()); current = ''; }
+      else if (ch === '\n' || (ch === '\r' && text[i+1] === '\n')) {
+        row.push(current.trim()); current = '';
+        rows.push(row); row = [];
+        if (ch === '\r') i++;
+      } else { current += ch; }
+    }
+  }
+  if (current || row.length) { row.push(current.trim()); rows.push(row); }
+  return rows;
+}
+
+function findWeekLabelRow(rows) {
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => /^Week \d+$/.test(c))) return i;
+  }
+  return -1;
+}
+
+function findDatesRow(rows) {
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
+    if (rows[i].some(c => c === 'Week Ending')) return i;
+  }
+  return -1;
+}
+
+function parseValue(raw) {
+  if (!raw || raw === '' || raw === '-') return null;
+  let s = raw.replace(/^\$/, '').replace(/,/g, '');
+  const num = parseFloat(s);
+  return isNaN(num) ? null : num;
+}
+
+function processData(rows) {
+  const weekLabelRowIdx = findWeekLabelRow(rows);
+  const datesRowIdx = findDatesRow(rows);
+  if (weekLabelRowIdx < 0 || datesRowIdx < 0) throw new Error('Could not find week/date rows');
+
+  const weekLabelRow = rows[weekLabelRowIdx];
+  const datesRow = rows[datesRowIdx];
+
+  // Find all week columns (skip Week 68 which is future)
+  weekColumns = [];
+  for (let col = 0; col < weekLabelRow.length; col++) {
+    const label = weekLabelRow[col];
+    const date = datesRow[col] || '';
+    if (/^Week \d+$/.test(label) && label !== 'Week 68') {
+      weekColumns.push({ col, label, date });
+    }
+  }
+
+  // Build metric data
+  const metrics = {};
+  for (const [key, substring] of Object.entries(METRIC_KEYS)) {
+    for (let r = 0; r < rows.length; r++) {
+      const metricName = rows[r][3] || rows[r][2] || '';
+      if (metricName.includes(substring)) {
+        metrics[key] = weekColumns.map(wc => parseValue(rows[r][wc.col]));
+        break;
+      }
+    }
+    if (!metrics[key]) metrics[key] = weekColumns.map(() => null);
+  }
+  return metrics;
+}
+
+function fmt(val, key) {
+  if (val === null || val === undefined) return '--';
+  if (key === 'pipelineValue') return '$' + val.toFixed(2) + 'M';
+  if (key === 'avgDaysStage') return val.toFixed(0) + ' days';
+  if (CURRENCY_METRICS.has(key)) {
+    if (Math.abs(val) >= 1000000) return '$' + (val/1000000).toFixed(2) + 'M';
+    if (Math.abs(val) >= 1000) return '$' + (val/1000).toFixed(1) + 'K';
+    return '$' + val.toLocaleString('en-US', {maximumFractionDigits:0});
+  }
+  return val.toLocaleString('en-US', {maximumFractionDigits:0});
+}
+
+function deltaHTML(curr, prev, key) {
+  if (BALANCE_METRICS.has(key)) return '<span class="snapshot-badge">Snapshot</span>';
+  if (curr === null || prev === null || prev === 0) return '<span class="delta neutral">--</span>';
+  const pct = ((curr - prev) / Math.abs(prev) * 100);
+  const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
+  const arrow = pct > 0 ? '\u25B2' : pct < 0 ? '\u25BC' : '';
+  return `<span class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
+}
+
+function priorLabel(val, key) {
+  if (val === null) return '';
+  return `<span class="prior">Prior: ${fmt(val, key)}</span>`;
+}
+
+function cardHTML(label, key, wi) {
+  const curr = allData[key][wi];
+  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
+  const isCurr = CURRENCY_METRICS.has(key);
+  return `<div class="card">
+    <div class="card-label">${label}</div>
+    <div class="card-value${isCurr ? ' currency' : ''}">${fmt(curr, key)}</div>
+    <div class="card-meta">${deltaHTML(curr, prev, key)} ${priorLabel(prev, key)}</div>
+  </div>`;
+}
+
+function miniCardHTML(label, key, wi) {
+  const curr = allData[key][wi];
+  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
+  return `<div class="mini-card">
+    <div class="mini-label">${label}</div>
+    <div class="mini-value">${fmt(curr, key)}</div>
+    <div class="mini-delta">${deltaHTML(curr, prev, key)}</div>
+  </div>`;
+}
+
+function funnelStageHTML(label, key, wi) {
+  const curr = allData[key][wi];
+  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
+  return `<div class="funnel-stage">
+    <div class="stage-label">${label}</div>
+    <div class="stage-value">${fmt(curr, key)}</div>
+    <div class="stage-delta">${deltaHTML(curr, prev, key)}</div>
+  </div>`;
+}
+
+function render(wi) {
+  currentWeekIdx = wi;
+  const d = allData;
+  const wk = weekColumns[wi];
+
+  // Deal breakdown
+  const ob = d.outboundDeals[wi]; const ib = d.inboundDeals[wi];
+  const conf = d.conferenceDeals[wi]; const ref = d.referrals[wi];
+
+  // Touches breakdown
+  const emails = d.emailsSent[wi]; const dms = d.linkedinDMs[wi]; const calls = d.callsDials[wi];
+
+  const html = `<div class="dashboard">
+    <!-- REVENUE & FINANCE -->
+    <div class="section green-accent">
+      <div class="section-title"><span class="dot"></span>Revenue & Finance</div>
+      <div class="cards">
+        ${cardHTML('Booked Revenue from Drawback Claims', 'bookedRevenue', wi)}
+        ${cardHTML('Collected Revenue from Drawback Claims', 'collectedRevenue', wi)}
+        ${cardHTML('Revenue in CBP Queue', 'revenueAwaitingCollection', wi)}
+      </div>
+    </div>
+
+    <!-- CLAIM OPERATIONS -->
+    <div class="section orange-accent">
+      <div class="section-title"><span class="dot"></span>Claim Operations</div>
+      <div class="mini-cards">
+        ${miniCardHTML('Apps Submitted', 'appsSubmitted', wi)}
+        ${miniCardHTML('Apps Approved', 'appsApproved', wi)}
+        ${miniCardHTML('In Review at CBP', 'appsInReview', wi)}
+        ${miniCardHTML('Awaiting Submission', 'claimsAwaitingSub', wi)}
+      </div>
+      <div class="cards">
+        ${cardHTML('Claims Transmitted to CBP', 'claimsTransmitted', wi)}
+        ${cardHTML('Claims With CBP Awaiting Settlement', 'claimsWithCBPDollar', wi)}
+      </div>
+    </div>
+
+    <!-- SALES FUNNEL -->
+    <div class="section orange-accent">
+      <div class="section-title"><span class="dot"></span>Sales Funnel</div>
+      <div class="funnel-row">
+        ${funnelStageHTML('Qualified', 'qualifiedDeals', wi)}
+        ${funnelStageHTML('Discovery', 'discoveryDeals', wi)}
+        ${funnelStageHTML('Offer', 'newOffers', wi)}
+        ${funnelStageHTML('Signed', 'signedDeals', wi)}
+      </div>
+      <div class="cards" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-label">Total New Deals This Week</div>
+          <div class="card-value">${fmt(d.totalNewDeals[wi], 'totalNewDeals')}</div>
+          <div class="breakdown">
+            <span class="tag">Outbound: ${ob !== null ? ob : '--'}</span>
+            <span class="tag">Inbound: ${ib !== null ? ib : '--'}</span>
+            <span class="tag">Conference: ${conf !== null ? conf : '--'}</span>
+            <span class="tag">Referral: ${ref !== null ? ref : '--'}</span>
+          </div>
+        </div>
+        ${cardHTML('Total Pipeline Value', 'pipelineValue', wi)}
+        ${cardHTML('Unique Deals in Pipeline', 'uniqueDeals', wi)}
+        ${cardHTML('Avg. Days in Stage', 'avgDaysStage', wi)}
+      </div>
+    </div>
+
+    <!-- GTM TOP OF FUNNEL -->
+    <div class="section blue-accent">
+      <div class="section-title"><span class="dot"></span>GTM Top of Funnel</div>
+      <div class="cards">
+        ${cardHTML('New Companies Added', 'newCompanies', wi)}
+        <div class="card">
+          <div class="card-label">Total Sales Touches</div>
+          <div class="card-value">${fmt(d.totalTouches[wi], 'totalTouches')}</div>
+          <div class="breakdown">
+            <span class="tag">Emails: ${emails !== null ? emails.toLocaleString() : '--'}</span>
+            <span class="tag">LinkedIn DMs: ${dms !== null ? dms : '--'}</span>
+            <span class="tag">Calls: ${calls !== null ? calls : '--'}</span>
+          </div>
+          <div class="card-meta" style="margin-top:6px">
+            ${deltaHTML(d.totalTouches[wi], d.totalTouches[wi+1], 'totalTouches')}
+            ${priorLabel(d.totalTouches[wi+1], 'totalTouches')}
+          </div>
+        </div>
+        ${cardHTML('LinkedIn Followers (Weekly Gain)', 'linkedinFollowers', wi)}
+        ${cardHTML('Website Visits', 'websiteVisits', wi)}
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('app').innerHTML = html;
+}
+
+function populateWeekSelector() {
+  const sel = document.getElementById('weekSelect');
+  sel.innerHTML = '';
+  weekColumns.forEach((wc, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${wc.label} (ending ${wc.date})`;
+    sel.appendChild(opt);
+  });
+  sel.disabled = false;
+  sel.value = 0;
+  sel.addEventListener('change', () => render(parseInt(sel.value)));
+}
+
+async function fetchAndRender() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error('Failed to fetch sheet: ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    allData = processData(rows);
+    populateWeekSelector();
+    render(0);
+    document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleString();
+  } catch (e) {
+    document.getElementById('app').innerHTML = `<div class="error-msg">Error loading data: ${e.message}<br>Retrying in 30 seconds...</div>`;
+    setTimeout(fetchAndRender, 30000);
+  }
+}
+
+fetchAndRender();
+setInterval(fetchAndRender, 5 * 60 * 1000);
+</script>
+</body>
+</html>

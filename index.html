@@ -3,86 +3,222 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caspian Trade - Weekly KPI Dashboard</title>
+<title>Caspian Trade — GTM KPI Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0A1628;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
-  .header{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;border-bottom:1px solid rgba(255,255,255,0.08)}
-  .logo{font-size:22px;font-weight:700;letter-spacing:0.5px}
-  .logo span{color:#C9A84C}
-  .header-right{display:flex;align-items:center;gap:16px}
-  .week-select{background:#131E33;color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;min-width:200px}
-  .week-select:focus{outline:none;border-color:#C9A84C}
-  .week-select option{background:#131E33;color:#fff}
-  .last-updated{font-size:12px;color:rgba(255,255,255,0.4)}
-  .loading{text-align:center;padding:80px;font-size:18px;color:rgba(255,255,255,0.5)}
-  .dashboard{padding:24px 32px;max-width:1400px;margin:0 auto}
-  .section{margin-bottom:32px}
-  .section-title{font-size:16px;font-weight:600;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid;display:flex;align-items:center;gap:8px}
-  .section-title .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-  .green-accent .section-title{border-color:#22C55E}
-  .green-accent .dot{background:#22C55E}
-  .orange-accent .section-title{border-color:#F59E0B}
-  .orange-accent .dot{background:#F59E0B}
-  .blue-accent .section-title{border-color:#3B82F6}
-  .blue-accent .dot{background:#3B82F6}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-  .card{background:#131E33;border-radius:12px;padding:18px 20px;border:1px solid rgba(255,255,255,0.06);transition:border-color 0.2s}
-  .card:hover{border-color:rgba(255,255,255,0.12)}
-  .card-label{font-size:12px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
-  .card-value{font-size:28px;font-weight:700;color:#fff;margin-bottom:4px}
-  .card-value.currency{color:#C9A84C}
-  .card-meta{display:flex;align-items:center;gap:8px;font-size:13px;color:rgba(255,255,255,0.4)}
-  .card-meta .prior{font-size:12px}
-  .delta{font-weight:600;display:inline-flex;align-items:center;gap:3px}
-  .delta.up{color:#22C55E}
-  .delta.down{color:#EF4444}
-  .delta.neutral{color:rgba(255,255,255,0.3)}
-  .snapshot-badge{display:inline-block;font-size:10px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);padding:2px 8px;border-radius:4px;margin-left:6px}
-  .mini-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-  .mini-card{background:#131E33;border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);text-align:center}
-  .mini-card .mini-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.3px;margin-bottom:6px}
-  .mini-card .mini-value{font-size:22px;font-weight:700}
-  .mini-card .mini-delta{font-size:12px;margin-top:3px}
-  .funnel-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto}
-  .funnel-stage{flex:1;min-width:130px;background:#131E33;border-radius:10px;padding:14px 16px;text-align:center;border:1px solid rgba(255,255,255,0.06);position:relative}
-  .funnel-stage:not(:last-child)::after{content:'\u2192';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.2);font-size:18px;z-index:1}
-  .funnel-stage .stage-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:6px}
-  .funnel-stage .stage-value{font-size:24px;font-weight:700}
-  .funnel-stage .stage-delta{font-size:12px;margin-top:3px}
-  .breakdown{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
-  .breakdown .tag{font-size:11px;background:rgba(255,255,255,0.06);padding:3px 8px;border-radius:4px;color:rgba(255,255,255,0.6)}
-  .inline-stats{display:flex;gap:14px;flex-wrap:wrap}
-  .inline-stat{background:#131E33;border-radius:10px;padding:14px 18px;border:1px solid rgba(255,255,255,0.06);flex:1;min-width:180px}
-  .inline-stat .stat-label{font-size:12px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:6px}
-  .inline-stat .stat-value{font-size:22px;font-weight:700}
-  .error-msg{background:#2D1B1B;border:1px solid #EF4444;border-radius:8px;padding:16px;color:#FCA5A5;text-align:center;margin:40px}
-  @media(max-width:768px){
-    .header{flex-direction:column;gap:12px;padding:16px}
-    .dashboard{padding:16px}
-    .cards{grid-template-columns:1fr}
-    .funnel-row{flex-direction:column}
-    .funnel-stage::after{display:none}
-    .mini-cards{grid-template-columns:repeat(2,1fr)}
-  }
+/* ── Reset & Base ── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Archivo',sans-serif;background:#fff;color:#1a1a1a;min-height:100vh;display:flex}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:220px;min-height:100vh;background:#f4f5f7;border-right:1px solid #e2e4e8;
+  padding:24px 0;display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:10;
+}
+.sidebar-logo{padding:0 20px 24px;font-size:20px;font-weight:800;letter-spacing:0.3px;color:#0f3d3e}
+.sidebar-logo span{color:#1a1a1a}
+.sidebar-nav{flex:1;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;
+  color:#555;cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;
+}
+.nav-item:hover{background:#ebedf0;color:#1a1a1a}
+.nav-item.active{background:#e8f0f0;color:#0f3d3e;border-left-color:#0f3d3e;font-weight:600}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2}
+.sidebar-footer{padding:16px 20px;font-size:11px;color:#999}
+
+/* ── Main Content ── */
+.main{margin-left:220px;flex:1;min-height:100vh;background:#fff}
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;padding:16px 32px;
+  border-bottom:1px solid #e8e8e8;background:#fff;position:sticky;top:0;z-index:5;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-title{font-size:18px;font-weight:700;color:#1a1a1a}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.last-updated{font-size:11px;color:#999}
+
+/* ── Period Toggle ── */
+.period-toggle{display:flex;background:#f0f0f0;border-radius:6px;overflow:hidden}
+.period-btn{
+  padding:6px 14px;font-size:12px;font-weight:600;font-family:'Archivo',sans-serif;
+  border:none;background:transparent;color:#666;cursor:pointer;transition:all 0.15s;
+}
+.period-btn.active{background:#0f3d3e;color:#fff;border-radius:6px}
+
+/* ── Week Selector ── */
+.week-select{
+  font-family:'Archivo',sans-serif;font-size:13px;font-weight:500;
+  background:#fff;color:#1a1a1a;border:1px solid #d0d0d0;border-radius:6px;
+  padding:6px 12px;cursor:pointer;min-width:200px;
+}
+.week-select:focus{outline:none;border-color:#0f3d3e}
+
+/* ── Dashboard Grid ── */
+.dashboard{padding:24px 32px;max-width:1360px}
+.section{margin-bottom:28px}
+.section-header{
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:8px;
+  border-bottom:2px solid #e8e8e8;
+}
+.section-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.section-title{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#1a1a1a}
+
+/* ── Cards ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{
+  background:#fafafa;border-radius:8px;padding:16px 18px;border:1px solid #eaeaea;
+  transition:box-shadow 0.15s;
+}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.card-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px;font-weight:600}
+.card-value{font-size:26px;font-weight:800;color:#1a1a1a;margin-bottom:4px;line-height:1.1}
+.card-value.currency{color:#0f3d3e}
+.card-meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#999}
+.card-meta .prior{font-size:11px;color:#aaa}
+.delta{font-weight:600;display:inline-flex;align-items:center;gap:2px;font-size:12px}
+.delta.up{color:#16a34a}
+.delta.down{color:#dc2626}
+.delta.neutral{color:#bbb}
+.snapshot-badge{display:inline-block;font-size:10px;background:#f0f0f0;color:#888;padding:2px 7px;border-radius:3px;font-weight:500}
+.breakdown{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.breakdown .tag{font-size:11px;background:#f0f0f0;padding:3px 8px;border-radius:4px;color:#666;font-weight:500}
+
+/* ── Funnel ── */
+.funnel-container{position:relative;padding:16px 0}
+.funnel-visual{display:flex;flex-direction:column;align-items:center;gap:0;max-width:700px;margin:0 auto}
+.funnel-stage{
+  position:relative;text-align:center;padding:18px 24px;color:#fff;font-weight:600;
+  transition:transform 0.15s;
+}
+.funnel-stage:hover{transform:scale(1.02)}
+/* Each stage gets progressively narrower to create funnel shape */
+.funnel-stage:nth-child(1){width:100%;background:#0f3d3e;border-radius:8px 8px 0 0}
+.funnel-stage:nth-child(2){width:80%;background:#1a5c5e}
+.funnel-stage:nth-child(3){width:60%;background:#267a7d}
+.funnel-stage:nth-child(4){width:40%;background:#32999d;border-radius:0 0 8px 8px}
+.funnel-label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;opacity:0.85;margin-bottom:4px}
+.funnel-value{font-size:28px;font-weight:800}
+.funnel-delta{font-size:11px;opacity:0.8;margin-top:2px}
+.funnel-connector{width:2px;height:8px;background:#ccc}
+
+/* ── Mini Cards ── */
+.mini-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.mini-card{
+  background:#fafafa;border-radius:8px;padding:14px 16px;border:1px solid #eaeaea;text-align:center;
+}
+.mini-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:5px;font-weight:600}
+.mini-value{font-size:20px;font-weight:800;color:#1a1a1a}
+.mini-delta{font-size:11px;margin-top:3px}
+
+/* ── Inline Stats Row ── */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat-box{
+  background:#fafafa;border-radius:8px;padding:14px 16px;border:1px solid #eaeaea;
+}
+.stat-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:5px;font-weight:600}
+.stat-value{font-size:20px;font-weight:800;color:#1a1a1a}
+.stat-value.currency{color:#0f3d3e}
+.stat-delta{font-size:11px;margin-top:3px}
+
+/* ── Claims Pipeline Table ── */
+.claims-table{width:100%;border-collapse:collapse;font-size:13px}
+.claims-table th{
+  text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;
+  color:#888;font-weight:600;padding:8px 12px;border-bottom:2px solid #e8e8e8;
+}
+.claims-table td{padding:10px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.claims-table tr:hover{background:#fafafa}
+.claims-table .stage-name{font-weight:600;color:#1a1a1a}
+.claims-table .count-val{font-weight:700;font-size:15px}
+.claims-table .dollar-val{font-weight:700;font-size:15px;color:#0f3d3e}
+
+/* ── Loading & Error ── */
+.loading{text-align:center;padding:80px;font-size:16px;color:#999}
+.loading-spinner{display:inline-block;width:24px;height:24px;border:3px solid #e8e8e8;border-top-color:#0f3d3e;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:16px;color:#dc2626;text-align:center;margin:40px}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:12px 16px;flex-wrap:wrap;gap:8px}
+  .dashboard{padding:16px}
+  .cards{grid-template-columns:1fr}
+  .funnel-visual{max-width:100%}
+  .funnel-stage:nth-child(1){width:100%}
+  .funnel-stage:nth-child(2){width:90%}
+  .funnel-stage:nth-child(3){width:80%}
+  .funnel-stage:nth-child(4){width:70%}
+}
 </style>
 </head>
 <body>
-<div class="header">
-  <div class="logo"><span>Caspian</span> Trade</div>
-  <div class="header-right">
-    <select class="week-select" id="weekSelect" disabled>
-      <option>Loading...</option>
-    </select>
-    <div class="last-updated" id="lastUpdated"></div>
+
+<!-- Sidebar Navigation -->
+<aside class="sidebar">
+  <div class="sidebar-logo"><span>Caspian</span> Trade</div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" data-section="all">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" data-section="revenue">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      Revenue & Finance
+    </div>
+    <div class="nav-item" data-section="sales">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Sales & GTM
+    </div>
+    <div class="nav-item" data-section="pipeline">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
+      Pipeline Funnel
+    </div>
+    <div class="nav-item" data-section="operations">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Operations
+    </div>
+    <div class="nav-item" data-section="claims">
+      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Claims Pipeline
+    </div>
+  </nav>
+  <div class="sidebar-footer">Auto-refreshes every 5 min</div>
+</aside>
+
+<!-- Main Content -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title">GTM Dashboard</div>
+      <div class="period-toggle" id="periodToggle">
+        <button class="period-btn active" data-period="weekly">Weekly</button>
+        <button class="period-btn" data-period="monthly">Monthly</button>
+        <button class="period-btn" data-period="quarterly">Quarterly</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <select class="week-select" id="weekSelect" disabled><option>Loading...</option></select>
+      <div class="last-updated" id="lastUpdated"></div>
+    </div>
+  </div>
+
+  <div id="app">
+    <div class="loading"><span class="loading-spinner"></span>Loading dashboard data...</div>
   </div>
 </div>
-<div id="app"><div class="loading">Loading dashboard data...</div></div>
 
 <script>
+/* ══════════════════════════════════════════════════════════
+   DATA CONFIG
+   ══════════════════════════════════════════════════════════ */
+
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/1u-8smcV7dJTRZqGxdpl63GIPZBeBNiTOPnVnjPwDEuQ/gviz/tq?tqx=out:csv&sheet=Weekly%20Metrics%20Tracker';
 
-// Metric name substrings to match rows
+/* Each key maps to a substring that identifies the row in the spreadsheet */
 const METRIC_KEYS = {
   linkedinFollowers: 'New LinkedIns Followers',
   websiteVisits: 'Website Visits',
@@ -118,26 +254,34 @@ const METRIC_KEYS = {
   revenueAwaitingCollection: '$ Caspian Revenue Awaiting Collection'
 };
 
+/* Balance metrics = point-in-time snapshots. Use latest value, don't sum. */
 const BALANCE_METRICS = new Set([
   'pipelineValue','uniqueDeals','avgDaysStage','appsInReview',
   'claimsAwaitingSub','claimsAwaitingSubDollar','claimsWithCBP','claimsWithCBPDollar',
   'revenueAwaitingCollection'
 ]);
 
+/* Metrics displayed as dollar amounts */
 const CURRENCY_METRICS = new Set([
   'pipelineValue','claimsTransmitted','claimsPaid','bookedRevenue','collectedRevenue',
   'claimsAwaitingSubDollar','claimsWithCBPDollar','revenueAwaitingCollection'
 ]);
 
-let allData = null;
-let weekColumns = [];
-let currentWeekIdx = 0;
+let allData = null;       // { metricKey: [val_week0, val_week1, ...] }
+let weekColumns = [];     // [{ col, label, date }, ...] — most recent first
+let currentPeriod = 'weekly';
+let currentIdx = 0;       // selected index in the active period array
+let periodData = null;    // aggregated data for the active period
+let periodLabels = [];    // labels for the period selector dropdown
 
+/* ══════════════════════════════════════════════════════════
+   CSV PARSING
+   ══════════════════════════════════════════════════════════ */
+
+/* Handles quoted fields, commas inside quotes, and escaped double-quotes */
 function parseCSV(text) {
   const rows = [];
-  let current = '';
-  let inQuotes = false;
-  let row = [];
+  let current = '', inQuotes = false, row = [];
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (inQuotes) {
@@ -158,6 +302,7 @@ function parseCSV(text) {
   return rows;
 }
 
+/* Scan first 10 rows for one containing "Week N" labels */
 function findWeekLabelRow(rows) {
   for (let i = 0; i < Math.min(10, rows.length); i++) {
     if (rows[i].some(c => /^Week \d+$/.test(c))) return i;
@@ -165,6 +310,7 @@ function findWeekLabelRow(rows) {
   return -1;
 }
 
+/* Scan first 10 rows for the "Week Ending" date header */
 function findDatesRow(rows) {
   for (let i = 0; i < Math.min(10, rows.length); i++) {
     if (rows[i].some(c => c === 'Week Ending')) return i;
@@ -172,6 +318,7 @@ function findDatesRow(rows) {
   return -1;
 }
 
+/* Convert raw cell value to a number (strip $, commas) */
 function parseValue(raw) {
   if (!raw || raw === '' || raw === '-') return null;
   let s = raw.replace(/^\$/, '').replace(/,/g, '');
@@ -179,15 +326,16 @@ function parseValue(raw) {
   return isNaN(num) ? null : num;
 }
 
+/* Extract metric data from parsed CSV rows */
 function processData(rows) {
   const weekLabelRowIdx = findWeekLabelRow(rows);
   const datesRowIdx = findDatesRow(rows);
-  if (weekLabelRowIdx < 0 || datesRowIdx < 0) throw new Error('Could not find week/date rows');
+  if (weekLabelRowIdx < 0 || datesRowIdx < 0) throw new Error('Could not locate week/date header rows in the spreadsheet');
 
   const weekLabelRow = rows[weekLabelRowIdx];
   const datesRow = rows[datesRowIdx];
 
-  // Find all week columns (skip Week 68 which is future)
+  /* Identify all valid week columns (skip Week 68 = future placeholder) */
   weekColumns = [];
   for (let col = 0; col < weekLabelRow.length; col++) {
     const label = weekLabelRow[col];
@@ -197,7 +345,7 @@ function processData(rows) {
     }
   }
 
-  // Build metric data
+  /* Map each metric key to an array of values (one per week, most-recent first) */
   const metrics = {};
   for (const [key, substring] of Object.entries(METRIC_KEYS)) {
     for (let r = 0; r < rows.length; r++) {
@@ -212,8 +360,82 @@ function processData(rows) {
   return metrics;
 }
 
+/* ══════════════════════════════════════════════════════════
+   AGGREGATION — Monthly / Quarterly
+   ══════════════════════════════════════════════════════════ */
+
+/*
+ * Groups weekly data into monthly or quarterly buckets.
+ * Flow metrics (e.g. new deals) = sum of weeks in the period.
+ * Balance metrics (e.g. pipeline value) = latest week's value (snapshot).
+ */
+function aggregateData(rawData, weekCols, period) {
+  if (period === 'weekly') {
+    periodLabels = weekCols.map(wc => `${wc.label} (ending ${wc.date})`);
+    return rawData;
+  }
+
+  /* Parse each week's ending date to determine which month/quarter it belongs to */
+  const buckets = {};
+  const bucketOrder = [];
+
+  weekCols.forEach((wc, idx) => {
+    const d = new Date(wc.date);
+    if (isNaN(d.getTime())) return;
+    let key;
+    if (period === 'monthly') {
+      /* Group by year-month */
+      key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    } else {
+      /* Group by year-quarter */
+      const q = Math.ceil((d.getMonth()+1)/3);
+      key = `${d.getFullYear()}-Q${q}`;
+    }
+    if (!buckets[key]) { buckets[key] = []; bucketOrder.push(key); }
+    buckets[key].push(idx);
+  });
+
+  /* Build aggregated metric arrays — one value per bucket */
+  const aggregated = {};
+  for (const mk of Object.keys(rawData)) {
+    aggregated[mk] = bucketOrder.map(bk => {
+      const indices = buckets[bk];
+      if (BALANCE_METRICS.has(mk)) {
+        /* Snapshot: use the most recent week's value in this period (index 0 = most recent) */
+        const latest = indices[0];
+        return rawData[mk][latest];
+      } else {
+        /* Flow: sum all non-null values in this period */
+        let sum = null;
+        for (const i of indices) {
+          const v = rawData[mk][i];
+          if (v !== null) sum = (sum || 0) + v;
+        }
+        return sum;
+      }
+    });
+  }
+
+  /* Build human-readable labels for the period dropdown */
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  periodLabels = bucketOrder.map(bk => {
+    if (period === 'monthly') {
+      const [y, m] = bk.split('-');
+      return `${monthNames[parseInt(m)-1]} ${y}`;
+    }
+    return bk.replace('-',' ');
+  });
+
+  return aggregated;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FORMATTING HELPERS
+   ══════════════════════════════════════════════════════════ */
+
+/* Format a metric value for display */
 function fmt(val, key) {
-  if (val === null || val === undefined) return '--';
+  if (val === null || val === undefined) return '—';
   if (key === 'pipelineValue') return '$' + val.toFixed(2) + 'M';
   if (key === 'avgDaysStage') return val.toFixed(0) + ' days';
   if (CURRENCY_METRICS.has(key)) {
@@ -224,23 +446,31 @@ function fmt(val, key) {
   return val.toLocaleString('en-US', {maximumFractionDigits:0});
 }
 
+/* Render a percentage change indicator, or "Snapshot" badge for balance metrics */
 function deltaHTML(curr, prev, key) {
   if (BALANCE_METRICS.has(key)) return '<span class="snapshot-badge">Snapshot</span>';
-  if (curr === null || prev === null || prev === 0) return '<span class="delta neutral">--</span>';
+  if (curr === null || prev === null || prev === 0) return '<span class="delta neutral">—</span>';
   const pct = ((curr - prev) / Math.abs(prev) * 100);
   const cls = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
   const arrow = pct > 0 ? '\u25B2' : pct < 0 ? '\u25BC' : '';
   return `<span class="delta ${cls}">${arrow} ${Math.abs(pct).toFixed(1)}%</span>`;
 }
 
+/* Show the prior period's value for comparison */
 function priorLabel(val, key) {
   if (val === null) return '';
   return `<span class="prior">Prior: ${fmt(val, key)}</span>`;
 }
 
-function cardHTML(label, key, wi) {
-  const curr = allData[key][wi];
-  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
+/* ══════════════════════════════════════════════════════════
+   COMPONENT BUILDERS
+   ══════════════════════════════════════════════════════════ */
+
+/* Standard metric card */
+function cardHTML(label, key, idx) {
+  const d = periodData;
+  const curr = d[key][idx];
+  const prev = d[key][idx + 1] !== undefined ? d[key][idx + 1] : null;
   const isCurr = CURRENCY_METRICS.has(key);
   return `<div class="card">
     <div class="card-label">${label}</div>
@@ -249,129 +479,274 @@ function cardHTML(label, key, wi) {
   </div>`;
 }
 
-function miniCardHTML(label, key, wi) {
-  const curr = allData[key][wi];
-  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
-  return `<div class="mini-card">
-    <div class="mini-label">${label}</div>
-    <div class="mini-value">${fmt(curr, key)}</div>
-    <div class="mini-delta">${deltaHTML(curr, prev, key)}</div>
+/* Small stat box for grid layouts */
+function statBoxHTML(label, key, idx, isCurrency) {
+  const d = periodData;
+  const curr = d[key][idx];
+  const prev = d[key][idx + 1] !== undefined ? d[key][idx + 1] : null;
+  return `<div class="stat-box">
+    <div class="stat-label">${label}</div>
+    <div class="stat-value${isCurrency ? ' currency' : ''}">${fmt(curr, key)}</div>
+    <div class="stat-delta">${deltaHTML(curr, prev, key)}</div>
   </div>`;
 }
 
-function funnelStageHTML(label, key, wi) {
-  const curr = allData[key][wi];
-  const prev = allData[key][wi + 1] !== undefined ? allData[key][wi + 1] : null;
-  return `<div class="funnel-stage">
-    <div class="stage-label">${label}</div>
-    <div class="stage-value">${fmt(curr, key)}</div>
-    <div class="stage-delta">${deltaHTML(curr, prev, key)}</div>
-  </div>`;
-}
+/* ══════════════════════════════════════════════════════════
+   RENDER DASHBOARD
+   ══════════════════════════════════════════════════════════ */
 
-function render(wi) {
-  currentWeekIdx = wi;
-  const d = allData;
-  const wk = weekColumns[wi];
+function render(idx) {
+  currentIdx = idx;
+  const d = periodData;
 
-  // Deal breakdown
-  const ob = d.outboundDeals[wi]; const ib = d.inboundDeals[wi];
-  const conf = d.conferenceDeals[wi]; const ref = d.referrals[wi];
+  /* Convenience: current values for inline display */
+  const ob = d.outboundDeals[idx];
+  const ib = d.inboundDeals[idx];
+  const conf = d.conferenceDeals[idx];
+  const ref = d.referrals[idx];
+  const emails = d.emailsSent[idx];
+  const dms = d.linkedinDMs[idx];
+  const calls = d.callsDials[idx];
 
-  // Touches breakdown
-  const emails = d.emailsSent[wi]; const dms = d.linkedinDMs[wi]; const calls = d.callsDials[wi];
+  /* Funnel delta helper — shows raw count change for funnel stages */
+  function funnelDelta(key) {
+    const curr = d[key][idx];
+    const prev = d[key][idx+1] !== undefined ? d[key][idx+1] : null;
+    if (curr === null || prev === null) return '';
+    const diff = curr - prev;
+    if (diff === 0) return '<span style="opacity:0.7">No change</span>';
+    const sign = diff > 0 ? '+' : '';
+    const color = diff > 0 ? '#16a34a' : '#dc2626';
+    return `<span style="color:${color};font-weight:600">${sign}${diff} vs prior</span>`;
+  }
 
   const html = `<div class="dashboard">
-    <!-- REVENUE & FINANCE -->
-    <div class="section green-accent">
-      <div class="section-title"><span class="dot"></span>Revenue & Finance</div>
+
+    <!-- ═══ REVENUE & FINANCE ═══ -->
+    <div class="section" data-sec="revenue">
+      <div class="section-header">
+        <span class="section-dot" style="background:#0f3d3e"></span>
+        <span class="section-title">Revenue & Finance</span>
+      </div>
       <div class="cards">
-        ${cardHTML('Booked Revenue from Drawback Claims', 'bookedRevenue', wi)}
-        ${cardHTML('Collected Revenue from Drawback Claims', 'collectedRevenue', wi)}
-        ${cardHTML('Revenue in CBP Queue', 'revenueAwaitingCollection', wi)}
+        ${cardHTML('Booked Revenue', 'bookedRevenue', idx)}
+        ${cardHTML('Collected Revenue', 'collectedRevenue', idx)}
+        ${cardHTML('Revenue Awaiting Collection', 'revenueAwaitingCollection', idx)}
+        ${cardHTML('Claims Paid by CBP', 'claimsPaid', idx)}
       </div>
     </div>
 
-    <!-- CLAIM OPERATIONS -->
-    <div class="section orange-accent">
-      <div class="section-title"><span class="dot"></span>Claim Operations</div>
-      <div class="mini-cards">
-        ${miniCardHTML('Apps Submitted', 'appsSubmitted', wi)}
-        ${miniCardHTML('Apps Approved', 'appsApproved', wi)}
-        ${miniCardHTML('In Review at CBP', 'appsInReview', wi)}
-        ${miniCardHTML('Awaiting Submission', 'claimsAwaitingSub', wi)}
+    <!-- ═══ SALES & GTM ═══ -->
+    <div class="section" data-sec="sales">
+      <div class="section-header">
+        <span class="section-dot" style="background:#2563eb"></span>
+        <span class="section-title">Sales & Go-to-Market</span>
       </div>
-      <div class="cards">
-        ${cardHTML('Claims Transmitted to CBP', 'claimsTransmitted', wi)}
-        ${cardHTML('Claims With CBP Awaiting Settlement', 'claimsWithCBPDollar', wi)}
-      </div>
-    </div>
 
-    <!-- SALES FUNNEL -->
-    <div class="section orange-accent">
-      <div class="section-title"><span class="dot"></span>Sales Funnel</div>
-      <div class="funnel-row">
-        ${funnelStageHTML('Qualified', 'qualifiedDeals', wi)}
-        ${funnelStageHTML('Discovery', 'discoveryDeals', wi)}
-        ${funnelStageHTML('Offer', 'newOffers', wi)}
-        ${funnelStageHTML('Signed', 'signedDeals', wi)}
+      <!-- Top-of-funnel activity -->
+      <div class="stats-row" style="margin-bottom:12px">
+        ${statBoxHTML('New Companies', 'newCompanies', idx, false)}
+        ${statBoxHTML('Total Touches', 'totalTouches', idx, false)}
+        ${statBoxHTML('Emails Sent', 'emailsSent', idx, false)}
+        ${statBoxHTML('LinkedIn DMs', 'linkedinDMs', idx, false)}
+        ${statBoxHTML('Calls / Dials', 'callsDials', idx, false)}
       </div>
-      <div class="cards" style="margin-bottom:14px">
+
+      <!-- New deal sources -->
+      <div class="cards" style="margin-bottom:12px">
         <div class="card">
-          <div class="card-label">Total New Deals This Week</div>
-          <div class="card-value">${fmt(d.totalNewDeals[wi], 'totalNewDeals')}</div>
+          <div class="card-label">Total New Deals</div>
+          <div class="card-value">${fmt(d.totalNewDeals[idx], 'totalNewDeals')}</div>
           <div class="breakdown">
-            <span class="tag">Outbound: ${ob !== null ? ob : '--'}</span>
-            <span class="tag">Inbound: ${ib !== null ? ib : '--'}</span>
-            <span class="tag">Conference: ${conf !== null ? conf : '--'}</span>
-            <span class="tag">Referral: ${ref !== null ? ref : '--'}</span>
-          </div>
-        </div>
-        ${cardHTML('Total Pipeline Value', 'pipelineValue', wi)}
-        ${cardHTML('Unique Deals in Pipeline', 'uniqueDeals', wi)}
-        ${cardHTML('Avg. Days in Stage', 'avgDaysStage', wi)}
-      </div>
-    </div>
-
-    <!-- GTM TOP OF FUNNEL -->
-    <div class="section blue-accent">
-      <div class="section-title"><span class="dot"></span>GTM Top of Funnel</div>
-      <div class="cards">
-        ${cardHTML('New Companies Added', 'newCompanies', wi)}
-        <div class="card">
-          <div class="card-label">Total Sales Touches</div>
-          <div class="card-value">${fmt(d.totalTouches[wi], 'totalTouches')}</div>
-          <div class="breakdown">
-            <span class="tag">Emails: ${emails !== null ? emails.toLocaleString() : '--'}</span>
-            <span class="tag">LinkedIn DMs: ${dms !== null ? dms : '--'}</span>
-            <span class="tag">Calls: ${calls !== null ? calls : '--'}</span>
+            <span class="tag">Outbound: ${ob !== null ? ob : '—'}</span>
+            <span class="tag">Inbound: ${ib !== null ? ib : '—'}</span>
+            <span class="tag">Conference: ${conf !== null ? conf : '—'}</span>
+            <span class="tag">Referral: ${ref !== null ? ref : '—'}</span>
           </div>
           <div class="card-meta" style="margin-top:6px">
-            ${deltaHTML(d.totalTouches[wi], d.totalTouches[wi+1], 'totalTouches')}
-            ${priorLabel(d.totalTouches[wi+1], 'totalTouches')}
+            ${deltaHTML(d.totalNewDeals[idx], d.totalNewDeals[idx+1], 'totalNewDeals')}
+            ${priorLabel(d.totalNewDeals[idx+1], 'totalNewDeals')}
           </div>
         </div>
-        ${cardHTML('LinkedIn Followers (Weekly Gain)', 'linkedinFollowers', wi)}
-        ${cardHTML('Website Visits', 'websiteVisits', wi)}
+        ${cardHTML('LinkedIn Followers', 'linkedinFollowers', idx)}
+        ${cardHTML('Website Visits', 'websiteVisits', idx)}
       </div>
     </div>
+
+    <!-- ═══ PIPELINE FUNNEL ═══ -->
+    <div class="section" data-sec="pipeline">
+      <div class="section-header">
+        <span class="section-dot" style="background:#f59e0b"></span>
+        <span class="section-title">Pipeline Funnel</span>
+      </div>
+
+      <!-- Visual funnel shape -->
+      <div class="funnel-container">
+        <div class="funnel-visual">
+          <div class="funnel-stage">
+            <div class="funnel-label">Qualified</div>
+            <div class="funnel-value">${fmt(d.qualifiedDeals[idx], 'qualifiedDeals')}</div>
+            <div class="funnel-delta">${funnelDelta('qualifiedDeals')}</div>
+          </div>
+          <div class="funnel-connector"></div>
+          <div class="funnel-stage">
+            <div class="funnel-label">Discovery</div>
+            <div class="funnel-value">${fmt(d.discoveryDeals[idx], 'discoveryDeals')}</div>
+            <div class="funnel-delta">${funnelDelta('discoveryDeals')}</div>
+          </div>
+          <div class="funnel-connector"></div>
+          <div class="funnel-stage">
+            <div class="funnel-label">Offer</div>
+            <div class="funnel-value">${fmt(d.newOffers[idx], 'newOffers')}</div>
+            <div class="funnel-delta">${funnelDelta('newOffers')}</div>
+          </div>
+          <div class="funnel-connector"></div>
+          <div class="funnel-stage">
+            <div class="funnel-label">Signed</div>
+            <div class="funnel-value">${fmt(d.signedDeals[idx], 'signedDeals')}</div>
+            <div class="funnel-delta">${funnelDelta('signedDeals')}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline summary metrics -->
+      <div class="stats-row">
+        ${statBoxHTML('Pipeline Value', 'pipelineValue', idx, true)}
+        ${statBoxHTML('Unique Deals', 'uniqueDeals', idx, false)}
+        ${statBoxHTML('Avg. Days in Stage', 'avgDaysStage', idx, false)}
+      </div>
+    </div>
+
+    <!-- ═══ OPERATIONS ═══ -->
+    <div class="section" data-sec="operations">
+      <div class="section-header">
+        <span class="section-dot" style="background:#8b5cf6"></span>
+        <span class="section-title">Operations — CBP Applications</span>
+      </div>
+      <div class="stats-row">
+        ${statBoxHTML('Apps Submitted', 'appsSubmitted', idx, false)}
+        ${statBoxHTML('Apps Approved', 'appsApproved', idx, false)}
+        ${statBoxHTML('In Review at CBP', 'appsInReview', idx, false)}
+        ${statBoxHTML('Unique Customers w/ Claims', 'uniqueCustomersClaims', idx, false)}
+      </div>
+    </div>
+
+    <!-- ═══ CLAIMS PIPELINE ═══ -->
+    <div class="section" data-sec="claims">
+      <div class="section-header">
+        <span class="section-dot" style="background:#ef4444"></span>
+        <span class="section-title">Claims Pipeline — Stage Breakdown</span>
+      </div>
+      <table class="claims-table">
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Count</th>
+            <th>Dollar Value</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="stage-name">Awaiting Submission</td>
+            <td class="count-val">${fmt(d.claimsAwaitingSub[idx], 'claimsAwaitingSub')}</td>
+            <td class="dollar-val">${fmt(d.claimsAwaitingSubDollar[idx], 'claimsAwaitingSubDollar')}</td>
+            <td>${deltaHTML(d.claimsAwaitingSub[idx], d.claimsAwaitingSub[idx+1], 'claimsAwaitingSub')}</td>
+          </tr>
+          <tr>
+            <td class="stage-name">Transmitted to CBP</td>
+            <td class="count-val">—</td>
+            <td class="dollar-val">${fmt(d.claimsTransmitted[idx], 'claimsTransmitted')}</td>
+            <td>${deltaHTML(d.claimsTransmitted[idx], d.claimsTransmitted[idx+1], 'claimsTransmitted')}</td>
+          </tr>
+          <tr>
+            <td class="stage-name">With CBP (Awaiting Settlement)</td>
+            <td class="count-val">${fmt(d.claimsWithCBP[idx], 'claimsWithCBP')}</td>
+            <td class="dollar-val">${fmt(d.claimsWithCBPDollar[idx], 'claimsWithCBPDollar')}</td>
+            <td>${deltaHTML(d.claimsWithCBP[idx], d.claimsWithCBP[idx+1], 'claimsWithCBP')}</td>
+          </tr>
+          <tr>
+            <td class="stage-name">Paid by CBP</td>
+            <td class="count-val">—</td>
+            <td class="dollar-val">${fmt(d.claimsPaid[idx], 'claimsPaid')}</td>
+            <td>${deltaHTML(d.claimsPaid[idx], d.claimsPaid[idx+1], 'claimsPaid')}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
   </div>`;
+
   document.getElementById('app').innerHTML = html;
 }
 
-function populateWeekSelector() {
+/* ══════════════════════════════════════════════════════════
+   CONTROLS: Period Toggle, Selector, Sidebar
+   ══════════════════════════════════════════════════════════ */
+
+/* Populate the dropdown with period labels */
+function populateSelector() {
   const sel = document.getElementById('weekSelect');
   sel.innerHTML = '';
-  weekColumns.forEach((wc, i) => {
+  periodLabels.forEach((label, i) => {
     const opt = document.createElement('option');
     opt.value = i;
-    opt.textContent = `${wc.label} (ending ${wc.date})`;
+    opt.textContent = label;
     sel.appendChild(opt);
   });
   sel.disabled = false;
   sel.value = 0;
-  sel.addEventListener('change', () => render(parseInt(sel.value)));
 }
+
+/* Wire up period toggle buttons */
+function initPeriodToggle() {
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPeriod = btn.dataset.period;
+      periodData = aggregateData(allData, weekColumns, currentPeriod);
+      populateSelector();
+      render(0);
+    });
+  });
+}
+
+/* Wire up the period dropdown selector */
+function initSelector() {
+  document.getElementById('weekSelect').addEventListener('change', function() {
+    render(parseInt(this.value));
+  });
+}
+
+/* Sidebar navigation — scroll to section or filter to just that section */
+function initSidebar() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+      const sec = item.dataset.section;
+      const sections = document.querySelectorAll('.section[data-sec]');
+
+      if (sec === 'all') {
+        /* Show all sections */
+        sections.forEach(s => s.style.display = '');
+      } else {
+        /* Show only the selected section */
+        sections.forEach(s => {
+          s.style.display = s.dataset.sec === sec ? '' : 'none';
+        });
+      }
+
+      /* Scroll to the top of the dashboard */
+      document.getElementById('app').scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   BOOTSTRAP — Fetch data and render
+   ══════════════════════════════════════════════════════════ */
 
 async function fetchAndRender() {
   try {
@@ -380,16 +755,26 @@ async function fetchAndRender() {
     const text = await res.text();
     const rows = parseCSV(text);
     allData = processData(rows);
-    populateWeekSelector();
+
+    /* Default to weekly view */
+    periodData = aggregateData(allData, weekColumns, currentPeriod);
+    populateSelector();
     render(0);
-    document.getElementById('lastUpdated').textContent = 'Updated: ' + new Date().toLocaleString();
+    document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
   } catch (e) {
-    document.getElementById('app').innerHTML = `<div class="error-msg">Error loading data: ${e.message}<br>Retrying in 30 seconds...</div>`;
+    document.getElementById('app').innerHTML =
+      `<div class="error-msg">Error loading data: ${e.message}<br>Retrying in 30s...</div>`;
     setTimeout(fetchAndRender, 30000);
   }
 }
 
+/* Initialize everything */
+initPeriodToggle();
+initSelector();
+initSidebar();
 fetchAndRender();
+
+/* Auto-refresh every 5 minutes */
 setInterval(fetchAndRender, 5 * 60 * 1000);
 </script>
 </body>

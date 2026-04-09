@@ -367,9 +367,14 @@ function aggregateData(rawData, weekCols, period) {
   const bucketOrder = [];
 
   weekCols.forEach((wc, idx) => {
-    /* Handle 2-digit years from the spreadsheet (e.g. "4/4/26" → April 4, 2026) */
-    let d = new Date(wc.date);
-    if (d.getFullYear() < 100) d.setFullYear(d.getFullYear() + 2000);
+    /* Parse dates manually to handle 2-digit years (e.g. "4/4/26" → April 4, 2026) */
+    const dateParts = wc.date.split('/');
+    if (dateParts.length < 3) return;
+    let yr = parseInt(dateParts[2]);
+    if (yr < 100) yr += 2000;
+    const mon = parseInt(dateParts[0]) - 1;
+    const day = parseInt(dateParts[1]);
+    const d = new Date(yr, mon, day);
     if (isNaN(d.getTime())) return;
     let key;
     if (period === 'monthly') {

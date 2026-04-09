@@ -357,25 +357,71 @@ function processData(rows) {
    AGGREGATION — Monthly / Quarterly
    ══════════════════════════════════════════════════════════ */
 
+/*
+ * Parses M/D or M/D/YY date strings and infers the year.
+ * Weeks are ordered most-recent-first in the data, so we walk
+ * backwards (oldest first) and increment the year whenever
+ * the month jumps down (e.g. Dec → Jan = new year).
+ */
+function parseWeekDates(weekCols) {
+  const parsed = new Array(weekCols.length);
+
+  /* Walk oldest-to-newest (end of array → start) to infer years */
+  let currentYear = new Date().getFullYear();
+
+  /* First pass: parse month/day from each date string */
+  const raw = weekCols.map(wc => {
+    const parts = wc.date.replace(/"/g, '').split('/');
+    const mon = parseInt(parts[0]);
+    const day = parseInt(parts[1]);
+    /* If a 3rd part exists, use it as the year */
+    let yr = parts.length >= 3 ? parseInt(parts[2]) : null;
+    if (yr !== null && yr < 100) yr += 2000;
+    return { mon, day, yr };
+  });
+
+  /* Walk from oldest (last index) to newest (index 0) and assign years.
+     If the date already has an explicit year, use it.
+     Otherwise, infer: start with a base year and bump forward when month wraps. */
+  if (raw.length > 0) {
+    /* Find the most recent entry with an explicit year, or default to current year for newest */
+    let baseYear = raw[0].yr || currentYear;
+
+    /* Since index 0 = most recent, assign that year first then walk backward */
+    parsed[0] = new Date(baseYear, raw[0].mon - 1, raw[0].day);
+
+    /* Walk backward from index 1 (second-most-recent) toward oldest */
+    for (let i = 1; i < raw.length; i++) {
+      const prev = raw[i - 1]; /* more recent entry */
+      const curr = raw[i];     /* older entry */
+      /* If the older entry has a higher month than the more-recent one,
+         it means we crossed a year boundary (e.g. Dec older, Jan newer) */
+      if (curr.mon > prev.mon + 1) {
+        baseYear--;
+      }
+      const yr = curr.yr || baseYear;
+      parsed[i] = new Date(yr, curr.mon - 1, curr.day);
+    }
+  }
+
+  return parsed;
+}
+
 function aggregateData(rawData, weekCols, period) {
   if (period === 'weekly') {
     periodLabels = weekCols.map(wc => `${wc.label} (ending ${wc.date})`);
     return rawData;
   }
 
+  /* Parse all week dates with year inference */
+  const dates = parseWeekDates(weekCols);
+
   const buckets = {};
   const bucketOrder = [];
 
   weekCols.forEach((wc, idx) => {
-    /* Parse dates manually to handle 2-digit years (e.g. "4/4/26" → April 4, 2026) */
-    const dateParts = wc.date.split('/');
-    if (dateParts.length < 3) return;
-    let yr = parseInt(dateParts[2]);
-    if (yr < 100) yr += 2000;
-    const mon = parseInt(dateParts[0]) - 1;
-    const day = parseInt(dateParts[1]);
-    const d = new Date(yr, mon, day);
-    if (isNaN(d.getTime())) return;
+    const d = dates[idx];
+    if (!d || isNaN(d.getTime())) return;
     let key;
     if (period === 'monthly') {
       key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;

@@ -181,10 +181,6 @@ body{font-family:'Archivo',sans-serif;background:#fff;color:#1a1a1a;min-height:1
       <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Operations
     </div>
-    <div class="nav-item" data-section="claims">
-      <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      Claims Pipeline
-    </div>
   </nav>
   <div class="sidebar-footer">Auto-refreshes every 5 min</div>
 </aside>
@@ -554,17 +550,6 @@ function render(idx) {
     </div>`;
   }
 
-  /* Funnel stage helper — renders one horizontal band of the funnel */
-  function funnelDelta(key) {
-    const curr = d[key][idx];
-    const prev = d[key][idx+1] !== undefined ? d[key][idx+1] : null;
-    if (curr === null || prev === null) return '';
-    const diff = curr - prev;
-    if (diff === 0) return 'No change vs prior';
-    const sign = diff > 0 ? '+' : '';
-    return `${sign}${diff} vs prior ${pn.toLowerCase()}`;
-  }
-
   const html = `<div class="dashboard">
 
     <!-- ═══ EXECUTIVE SUMMARY ═══ -->
@@ -628,43 +613,43 @@ function render(idx) {
       </table>
     </div>
 
-    <!-- ═══ PIPELINE FUNNEL ═══ -->
+    <!-- ═══ PIPELINE — CPA STAGES ═══ -->
     <div class="section" data-sec="pipeline">
       <div class="section-header">
         <span class="section-dot" style="background:#f59e0b"></span>
-        <span class="section-title">Pipeline — Funnel</span>
+        <span class="section-title">Pipeline — CPA Stages</span>
       </div>
 
-      <!-- Visual funnel — explicit class per stage for reliable color -->
+      <!-- Visual funnel — new CPA lifecycle stages -->
       <div class="funnel-container">
         <div class="funnel-visual">
           <div class="funnel-stage funnel-s1">
-            <div class="funnel-label">Qualified</div>
-            <div class="funnel-value">${fmt(d.qualifiedDeals[idx], 'qualifiedDeals')}</div>
-            <div class="funnel-delta">${funnelDelta('qualifiedDeals')}</div>
+            <div class="funnel-label">CPAs in Pipeline</div>
+            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
+            <div class="funnel-delta">Total active CPAs</div>
           </div>
           <div class="funnel-connector funnel-c1"></div>
           <div class="funnel-stage funnel-s2">
-            <div class="funnel-label">Discovery</div>
-            <div class="funnel-value">${fmt(d.discoveryDeals[idx], 'discoveryDeals')}</div>
-            <div class="funnel-delta">${funnelDelta('discoveryDeals')}</div>
+            <div class="funnel-label">Questionnaire Not Submitted</div>
+            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
+            <div class="funnel-delta">Awaiting customer questionnaire</div>
           </div>
           <div class="funnel-connector funnel-c2"></div>
           <div class="funnel-stage funnel-s3">
-            <div class="funnel-label">Offer</div>
-            <div class="funnel-value">${fmt(d.newOffers[idx], 'newOffers')}</div>
-            <div class="funnel-delta">${funnelDelta('newOffers')}</div>
+            <div class="funnel-label">Questionnaire Submitted / Trace Set</div>
+            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
+            <div class="funnel-delta">Questionnaire complete, trace set exists</div>
           </div>
           <div class="funnel-connector funnel-c3"></div>
           <div class="funnel-stage funnel-s4">
-            <div class="funnel-label">Signed</div>
-            <div class="funnel-value">${fmt(d.signedDeals[idx], 'signedDeals')}</div>
-            <div class="funnel-delta">${funnelDelta('signedDeals')}</div>
+            <div class="funnel-label">Submitted</div>
+            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
+            <div class="funnel-delta">Fully submitted / completed CPAs</div>
           </div>
         </div>
       </div>
 
-      <!-- Pipeline summary in table format -->
+      <!-- Pipeline summary metrics (existing data) -->
       <table class="op-table">
         <thead><tr>
           <th>Pipeline Metric</th>
@@ -686,11 +671,13 @@ function render(idx) {
 
     <!-- ═══ OPERATIONS ═══ -->
     <div class="section" data-sec="operations">
+
+      <!-- Sub-section 1: CBP Applications -->
       <div class="section-header">
         <span class="section-dot" style="background:#8b5cf6"></span>
-        <span class="section-title">Operations — CBP Applications</span>
+        <span class="section-title">CBP Applications</span>
       </div>
-      <table class="op-table">
+      <table class="op-table" style="margin-bottom:28px">
         <thead><tr>
           <th>Metric</th>
           <th>Current ${pn}</th>
@@ -698,19 +685,16 @@ function render(idx) {
           <th>Change</th>
         </tr></thead>
         <tbody>
+          ${tableRow('Applications in Review', 'appsInReview', idx)}
           ${tableRow('Applications Submitted', 'appsSubmitted', idx)}
           ${tableRow('Applications Approved', 'appsApproved', idx)}
-          ${tableRow('Applications in Review', 'appsInReview', idx)}
-          ${tableRow('Unique Customers w/ Claims', 'uniqueCustomersClaims', idx)}
         </tbody>
       </table>
-    </div>
 
-    <!-- ═══ CLAIMS PIPELINE ═══ -->
-    <div class="section" data-sec="claims">
+      <!-- Sub-section 2: Claims Pipeline -->
       <div class="section-header">
         <span class="section-dot" style="background:#ef4444"></span>
-        <span class="section-title">Claims Pipeline — Stage Breakdown</span>
+        <span class="section-title">Claims Pipeline</span>
       </div>
       <table class="op-table">
         <thead><tr>
@@ -720,6 +704,12 @@ function render(idx) {
           <th>Status</th>
         </tr></thead>
         <tbody>
+          <tr>
+            <td class="metric-name">Unique Customers w/ Claims</td>
+            <td class="val-current">${fmt(d.uniqueCustomersClaims[idx], 'uniqueCustomersClaims')}</td>
+            <td class="val-current">—</td>
+            <td><span class="val-delta ${deltaInfo(d.uniqueCustomersClaims[idx], d.uniqueCustomersClaims[idx+1], 'uniqueCustomersClaims').cls}">${deltaInfo(d.uniqueCustomersClaims[idx], d.uniqueCustomersClaims[idx+1], 'uniqueCustomersClaims').text}</span></td>
+          </tr>
           <tr>
             <td class="metric-name">Awaiting Submission</td>
             <td class="val-current">${fmt(d.claimsAwaitingSub[idx], 'claimsAwaitingSub')}</td>

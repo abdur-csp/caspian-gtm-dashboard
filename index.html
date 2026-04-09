@@ -620,31 +620,31 @@ function render(idx) {
         <span class="section-title">Pipeline — CPA Stages</span>
       </div>
 
-      <!-- Visual funnel — new CPA lifecycle stages -->
+      <!-- Visual funnel — Qualified → Discovery → Offer → Signed -->
       <div class="funnel-container">
         <div class="funnel-visual">
           <div class="funnel-stage funnel-s1">
-            <div class="funnel-label">CPAs in Pipeline</div>
-            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
-            <div class="funnel-delta">Total active CPAs</div>
+            <div class="funnel-label">Qualified</div>
+            <div class="funnel-value">${fmt(d.qualifiedDeals[idx], 'qualifiedDeals')}</div>
+            <div class="funnel-delta">${(function(){ const c=d.qualifiedDeals[idx],p=d.qualifiedDeals[idx+1]; if(c===null||p===null)return''; const diff=c-p; if(diff===0)return'No change vs prior'; return (diff>0?'+':'')+diff+' vs prior '+pn.toLowerCase(); })()}</div>
           </div>
           <div class="funnel-connector funnel-c1"></div>
           <div class="funnel-stage funnel-s2">
-            <div class="funnel-label">Questionnaire Not Submitted</div>
-            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
-            <div class="funnel-delta">Awaiting customer questionnaire</div>
+            <div class="funnel-label">Discovery</div>
+            <div class="funnel-value">${fmt(d.discoveryDeals[idx], 'discoveryDeals')}</div>
+            <div class="funnel-delta">${(function(){ const c=d.discoveryDeals[idx],p=d.discoveryDeals[idx+1]; if(c===null||p===null)return''; const diff=c-p; if(diff===0)return'No change vs prior'; return (diff>0?'+':'')+diff+' vs prior '+pn.toLowerCase(); })()}</div>
           </div>
           <div class="funnel-connector funnel-c2"></div>
           <div class="funnel-stage funnel-s3">
-            <div class="funnel-label">Questionnaire Submitted / Trace Set</div>
-            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
-            <div class="funnel-delta">Questionnaire complete, trace set exists</div>
+            <div class="funnel-label">Offer</div>
+            <div class="funnel-value">${fmt(d.newOffers[idx], 'newOffers')}</div>
+            <div class="funnel-delta">${(function(){ const c=d.newOffers[idx],p=d.newOffers[idx+1]; if(c===null||p===null)return''; const diff=c-p; if(diff===0)return'No change vs prior'; return (diff>0?'+':'')+diff+' vs prior '+pn.toLowerCase(); })()}</div>
           </div>
           <div class="funnel-connector funnel-c3"></div>
           <div class="funnel-stage funnel-s4">
-            <div class="funnel-label">Submitted</div>
-            <div class="funnel-value" style="font-size:18px;opacity:0.7">Coming Soon</div>
-            <div class="funnel-delta">Fully submitted / completed CPAs</div>
+            <div class="funnel-label">Signed</div>
+            <div class="funnel-value">${fmt(d.signedDeals[idx], 'signedDeals')}</div>
+            <div class="funnel-delta">${(function(){ const c=d.signedDeals[idx],p=d.signedDeals[idx+1]; if(c===null||p===null)return''; const diff=c-p; if(diff===0)return'No change vs prior'; return (diff>0?'+':'')+diff+' vs prior '+pn.toLowerCase(); })()}</div>
           </div>
         </div>
       </div>
@@ -685,6 +685,24 @@ function render(idx) {
           <th>Change</th>
         </tr></thead>
         <tbody>
+          <tr>
+            <td class="metric-name">CPAs in Pipeline</td>
+            <td class="val-current" style="color:#999;font-style:italic">Coming Soon</td>
+            <td class="val-prior" style="font-style:italic">—</td>
+            <td><span class="val-delta flat">—</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Questionnaires in Progress</td>
+            <td class="val-current" style="color:#999;font-style:italic">Coming Soon</td>
+            <td class="val-prior" style="font-style:italic">—</td>
+            <td><span class="val-delta flat">—</span></td>
+          </tr>
+          <tr>
+            <td class="metric-name">Trace Set Stage</td>
+            <td class="val-current" style="color:#999;font-style:italic">Coming Soon</td>
+            <td class="val-prior" style="font-style:italic">—</td>
+            <td><span class="val-delta flat">—</span></td>
+          </tr>
           ${tableRow('Applications in Review', 'appsInReview', idx)}
           ${tableRow('Applications Submitted', 'appsSubmitted', idx)}
           ${tableRow('Applications Approved', 'appsApproved', idx)}

@@ -334,7 +334,7 @@ function processData(rows) {
   for (let col = 0; col < weekLabelRow.length; col++) {
     const label = weekLabelRow[col];
     const date = datesRow[col] || '';
-    if (/^Week \d+$/.test(label) && label !== 'Week 68') {
+    if (/^Week \d+$/.test(label)) {
       weekColumns.push({ col, label, date });
     }
   }
@@ -367,7 +367,9 @@ function aggregateData(rawData, weekCols, period) {
   const bucketOrder = [];
 
   weekCols.forEach((wc, idx) => {
-    const d = new Date(wc.date);
+    /* Handle 2-digit years from the spreadsheet (e.g. "4/4/26" → April 4, 2026) */
+    let d = new Date(wc.date);
+    if (d.getFullYear() < 100) d.setFullYear(d.getFullYear() + 2000);
     if (isNaN(d.getTime())) return;
     let key;
     if (period === 'monthly') {

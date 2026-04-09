@@ -117,25 +117,22 @@ body{font-family:'Archivo',sans-serif;background:#fff;color:#1a1a1a;min-height:1
 .funnel-visual{display:flex;flex-direction:column;align-items:center;gap:0;max-width:660px;margin:0 auto}
 .funnel-stage{
   position:relative;text-align:center;padding:16px 24px;color:#fff;font-weight:600;
-  transition:transform 0.12s;
+  min-height:64px;transition:transform 0.12s;
 }
 .funnel-stage:hover{transform:scale(1.02)}
-/* Progressively narrower stages = funnel shape */
-.funnel-stage:nth-child(1){width:100%;background:#0a2e2f;border-radius:8px 8px 0 0}
-.funnel-stage:nth-child(2){width:78%;background:#0f3d3e}
-.funnel-stage:nth-child(3){width:56%;background:#1a5c5e}
-.funnel-stage:nth-child(4){width:36%;background:#267a7d;border-radius:0 0 8px 8px}
+/* Each stage gets its own class for reliable styling */
+.funnel-s1{width:100%;background:#0a2e2f;border-radius:8px 8px 0 0}
+.funnel-s2{width:78%;background:#0f3d3e}
+.funnel-s3{width:56%;background:#1a5c5e}
+.funnel-s4{width:36%;background:#267a7d;border-radius:0 0 8px 8px}
 .funnel-label{font-size:10px;text-transform:uppercase;letter-spacing:0.6px;opacity:0.8;margin-bottom:3px}
 .funnel-value{font-size:28px;font-weight:900}
 .funnel-delta{font-size:10px;opacity:0.85;margin-top:2px}
 /* Connector arrows between stages */
-.funnel-connector{
-  width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;
-  border-top:8px solid;margin:0;
-}
-.funnel-connector:nth-of-type(2){border-top-color:#0a2e2f}
-.funnel-connector:nth-of-type(4){border-top-color:#0f3d3e}
-.funnel-connector:nth-of-type(6){border-top-color:#1a5c5e}
+.funnel-connector{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:8px solid;margin:0}
+.funnel-c1{border-top-color:#0a2e2f}
+.funnel-c2{border-top-color:#0f3d3e}
+.funnel-c3{border-top-color:#1a5c5e}
 
 /* ── Loading / Error ── */
 .loading{text-align:center;padding:80px;font-size:14px;color:#999}
@@ -150,10 +147,10 @@ body{font-family:'Archivo',sans-serif;background:#fff;color:#1a1a1a;min-height:1
   .topbar{padding:12px 16px;flex-wrap:wrap;gap:8px}
   .dashboard{padding:16px}
   .exec-summary{grid-template-columns:repeat(2,1fr);gap:12px}
-  .funnel-stage:nth-child(1){width:100%}
-  .funnel-stage:nth-child(2){width:88%}
-  .funnel-stage:nth-child(3){width:76%}
-  .funnel-stage:nth-child(4){width:64%}
+  .funnel-s1{width:100%}
+  .funnel-s2{width:90%}
+  .funnel-s3{width:80%}
+  .funnel-s4{width:70%}
   .op-table{font-size:12px}
 }
 </style>
@@ -638,28 +635,28 @@ function render(idx) {
         <span class="section-title">Pipeline — Funnel</span>
       </div>
 
-      <!-- Visual funnel — dark backgrounds so numbers always visible -->
+      <!-- Visual funnel — explicit class per stage for reliable color -->
       <div class="funnel-container">
         <div class="funnel-visual">
-          <div class="funnel-stage">
+          <div class="funnel-stage funnel-s1">
             <div class="funnel-label">Qualified</div>
             <div class="funnel-value">${fmt(d.qualifiedDeals[idx], 'qualifiedDeals')}</div>
             <div class="funnel-delta">${funnelDelta('qualifiedDeals')}</div>
           </div>
-          <div class="funnel-connector"></div>
-          <div class="funnel-stage">
+          <div class="funnel-connector funnel-c1"></div>
+          <div class="funnel-stage funnel-s2">
             <div class="funnel-label">Discovery</div>
             <div class="funnel-value">${fmt(d.discoveryDeals[idx], 'discoveryDeals')}</div>
             <div class="funnel-delta">${funnelDelta('discoveryDeals')}</div>
           </div>
-          <div class="funnel-connector"></div>
-          <div class="funnel-stage">
+          <div class="funnel-connector funnel-c2"></div>
+          <div class="funnel-stage funnel-s3">
             <div class="funnel-label">Offer</div>
             <div class="funnel-value">${fmt(d.newOffers[idx], 'newOffers')}</div>
             <div class="funnel-delta">${funnelDelta('newOffers')}</div>
           </div>
-          <div class="funnel-connector"></div>
-          <div class="funnel-stage">
+          <div class="funnel-connector funnel-c3"></div>
+          <div class="funnel-stage funnel-s4">
             <div class="funnel-label">Signed</div>
             <div class="funnel-value">${fmt(d.signedDeals[idx], 'signedDeals')}</div>
             <div class="funnel-delta">${funnelDelta('signedDeals')}</div>
